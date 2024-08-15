@@ -1,0 +1,415 @@
+---
+title: "R_Projet"
+format: html
+editor: visual
+---
+
+# BDD clients
+
+## read.csv("/fichier.csv", sep = ";")
+
+```{r}
+# importer le fichier csv "clients"
+clients <- read.csv("/Users/huyen/Downloads/Base_Clients.csv", sep = ";")
+```
+
+## head()
+
+```{r}
+# afficher les premières lignes
+head(clients)
+```
+
+## tail()
+
+```{r}
+# afficher les dernières lignes
+tail(clients)
+```
+
+## summary()
+
+```{r}
+# description de la BDD
+summary(clients)
+```
+
+## nrow()
+
+```{r}
+# afficher le nombre de lignes
+nrow(clients)
+```
+
+## ncol()
+
+```{r}
+# afficher le nombre de colonnes
+ncol(clients)
+```
+
+## dim()
+
+```{r}
+# afficher la dimension du fichier
+dim(clients)
+```
+
+## colnames()
+
+```{r}
+# afficher les noms de colonnes
+colnames(clients)
+```
+
+## unique(bdd\$col)
+
+```{r}
+# les groupes distincts
+unique(clients$AgeGroup)
+```
+
+## table(bdd\$col)
+
+```{r}
+# le nombre d'individus par groupe
+table(clients$AgeGroup)
+```
+
+## str()
+
+```{r}
+# afficher la struture de la BDD
+str(clients)
+```
+
+## as.factor()
+
+```{r}
+# transformer de colonne en facteur
+clients$AgeGroup <- as.factor(clients$AgeGroup)
+clients$EducationLevel <- as.factor(clients$EducationLevel)
+clients$CustomerCategory <- as.factor(clients$CustomerCategory)
+
+summary(clients)
+```
+
+## is.na()
+
+```{r}
+# nombre de valeurs manquantes par colonne
+colSums(is.na(clients))
+```
+
+## rename()
+
+```{r}
+# renommer la colonne "Name" par "Nom" 
+
+# avec la fonction "rename" du package dplyr
+# installer le package "dplyr"
+install.packages("dplyr")
+library(dplyr)
+# de façon temporaire si vous ne réassigniez le résultat à l'objet "clients"
+rename(clients, Nom = Name)
+
+# de façon permanente si vous réassignez le résultat de  à l'objet "clients"
+clients <- rename(clients, Nom = Name) 
+
+# autre façon avec le pipe %>% 
+clients <- clients %>% rename(Nom = Name)
+
+View(clients)
+```
+
+## filter()
+
+```{r}
+# donner la liste des clients "Premium"
+clients_premium <- clients %>% filter(CustomerCategory == "Premium")
+
+# autre façon
+clients_premium <- filter(clients, CustomerCategory == "Premium")
+
+clients_premium
+```
+
+# BDD ventes
+
+```{r}
+# importer le fichier "Ventes"
+ventes <- read.csv("/Users/huyen/Downloads/Base_Ventes.csv", sep = ";")
+
+# afficher les premièrs lignes
+head(ventes)
+```
+
+```{r}
+# dimension de la BDD
+dim(ventes)
+```
+
+```{r}
+# structure de BDD
+str(ventes)
+```
+
+```{r}
+# description de la BDD
+summary(ventes)
+```
+
+```{r}
+# nombre de valeurs manquantes par colonne
+colSums(is.na(ventes))
+```
+
+```{r}
+# remplacer les valeurs manquantes sur le prix par 0
+ventes$Price[is.na(ventes$Price)] <- 0
+
+# vérifier s'il reste encore des valeurs manquantes
+```
+
+## na.omit()
+
+```{r}
+# pour supprimer les valeurs manquantes
+ventes <- na.omit(ventes)
+```
+
+```{r}
+# créer une nouvelle colonne
+ventes$TotalPrice <- ventes$Quantity * ventes$Price
+
+head(ventes)
+```
+
+## subset()
+
+```{r}
+# supprimer la colonne "PrixTotal"
+ventes <- subset(ventes, select = -PrixTotal)
+head(ventes)
+```
+
+## sum()
+
+```{r}
+# calculer la somme de la colonne "TotalPrice"
+sum(ventes$TotalPrice)
+```
+
+## filter() & arrange()
+
+```{r}
+# trier les produits dont le prix est supérieur ou égal à 30€
+# ensuite trier les prix par ordre croissant
+ventes_prix_30 <- ventes %>% filter(Price >= 30) %>% arrange(Price)
+ventes_prix_30
+```
+
+## filter() & arrange()
+
+```{r}
+# trier les prix par ordre décroissant
+ventes_prix_30 <- ventes %>% filter(Price >= 30) %>% arrange(desc(Price))
+ventes_prix_30
+```
+
+# Jointure de 2 BDD
+
+## left_join()
+
+```{r}
+# left_join - fonction du package dplyr :  plus performant pour de grandes BDD
+left_join <- left_join(ventes, clients, by= "CustomerID")
+
+# "merge" - fonction de base de R : plus lent sur de grandes tables
+# merge <- merge(ventes, clients, by= "CustomerID")
+```
+
+## groupby() & summarise()
+
+```{r}
+# calculer le prix total par catégorie de client
+left_join <- left_join %>% group_by(CustomerCategory) %>% summarise(somme = sum(TotalPrice), moyenne = mean(TotalPrice), nombre = n())
+left_join
+```
+
+# Traitement des dates avec lubridate
+
+```{r}
+# le type actuel de "Date" est chr
+str(joint$Date)
+```
+
+```{r}
+# install.packages("tidyverse")
+library(lubridate)
+
+# convertir Date en format dmy_hm
+joint$Date_bis <- dmy_hm(joint$Date)
+
+# vérifier le type de Data-bis
+str(joint$Date_bis)
+```
+
+```{r}
+# convertir Date en format yyyy-mm-dd
+joint$Date_bis_2 <- as.Date(dmy_hm(joint$Date))
+str(joint$Date_bis_2)
+```
+
+```{r}
+# obtenir le jour/ le mois/ l'année de chaque ligne
+joint$jour <- day(joint$Date_bis_2)
+joint$mois <- month(joint$Date_bis_2)
+joint$annee <- year(joint$Date_bis_2)
+
+head(joint)
+```
+
+# Fonction statistique_descriptive
+
+## is.numeric()
+
+```{r}
+# if else en R : tester si une variable est quantitative
+if (is.numeric(ventes$Quantity))
+    {result <- "Numérique"
+} else 
+    {result <- "Non numérique"}
+result
+```
+
+```{r}
+# boucle for en R
+for (variable in names(ventes)) {
+  if (is.numeric(ventes[[variable]])) {
+    print(paste0(variable, " est un numérique"))
+  } else {
+    print(paste0(variable, " n'est pas un numérique"))
+  }
+}
+```
+
+## function()
+
+```{r}
+# créer la fonction "statistique_descriptive"
+base_donnee <- ventes
+
+statistique_descriptive <- function(base_donnee){
+  resultat <- data.frame(nom_variable = character(), 
+                         min = numeric(), 
+                         max = numeric(), 
+                         moyenne = numeric(), 
+                         variance = numeric())
+  
+  liste_variable <- names(base_donnee)
+  for (variable in liste_variable) {
+    if (is.numeric(base_donnee[[variable]])) {
+      min <- min(base_donnee[[variable]], na.rm=T)
+      max <- round(max(base_donnee[[variable]], na.rm=T), 2)
+      moyenne <- round(mean(base_donnee[[variable]], na.rm=T), 2)
+      variance <- round(var(base_donnee[[variable]], na.rm=T), 2)
+      resultat[nrow(resultat)+1,] <- c(variable, min, max, moyenne, variance)
+    } 
+  }
+  return(resultat)
+}
+
+statistique_descriptive(ventes)
+```
+
+# Analyse des données
+
+## Prix total en fonction de la catégorie clients - boxplot()
+
+```{r}
+joint <- left_join(ventes, clients, by= "CustomerID")
+
+boxplot(data = joint,
+        TotalPrice ~ CustomerCategory)
+```
+
+## Nombre de clients par groupe d'âge
+
+### Méthode 1 : geom_bar()
+
+```{r}
+ggplot(data = joint, 
+       aes(AgeGroup))+
+        geom_bar()
+```
+
+### Méthode 2 : barplot()
+
+```{r}
+# Convertir la variable AgeGroup en facteur
+joint$AgeGroup <- as.factor(joint$AgeGroup)
+
+# Créer un tableau de fréquences pour la variable AgeGroup
+age_group_counts <- table(joint$AgeGroup)
+
+# Créer un diagramme à barres pour AgeGroup
+barplot(age_group_counts, 
+        main = "Distribution des groupes d'âge", 
+        xlab = "Groupes d'âge", 
+        ylab = "Fréquence", 
+        col = "blue")
+```
+
+### **=\> Conclusion** : La plupart de clients sont entre 46 et 55 ans.
+
+### Méthode 3 : pie()
+
+```{r}
+pie(age_group_counts, 
+    main = "Répartition des groupes d'âge", 
+    col = rainbow(length(age_group_counts)))
+```
+
+## Quantité en fonction du prix par catégorie - geom_point()
+
+```{r}
+ggplot(data = joint,
+       aes(x = Quantity,
+           y = Price,
+           color = CustomerCategory)) +
+      geom_point(size = 3) +
+      scale_color_manual(values = c("blue", "red", "green", "grey"))+
+      labs(x="Quantite",
+           y="Prix",
+           title = "Quantité en fonction du prix par catégorie")+
+      facet_wrap(~CustomerCategory)
+```
+
+## Prix total par catégorie - geom_boxplot()
+
+```{r}
+ggplot(data = joint, 
+       aes(x = CustomerCategory, 
+           y = TotalPrice)) +
+      geom_boxplot(aes(fill = CustomerCategory))
+```
+
+```{r}
+# changer de couleurs manuellement
+ggplot(data = joint, 
+       aes(x = CustomerCategory, 
+           y = Price)) +
+      geom_boxplot(aes(fill = CustomerCategory)) +
+      scale_fill_manual(values = c("blue", "red", "green", "grey"))
+```
+
+### geom_violin()
+
+```{r}
+ggplot(data = joint, 
+       aes(x = CustomerCategory, 
+           y = TotalPrice)) +
+      geom_violin(aes(fill = CustomerCategory)) +
+      scale_fill_manual(values = c("blue", "red", "green", "grey"))
+```
