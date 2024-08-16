@@ -1,0 +1,472 @@
+---
+title: "R-J6"
+format: html
+editor: visual
+---
+
+# Construction d'un modèle de ML avec BDD "titanic"
+
+1.  **Définition de la problématique** : prédire la probabilité de survie des passengers de Titanic
+
+2.  **Collecte et nettoyage des données** (Preprocessing) : traiter les valeurs manquantes/ aberrantes/ incorrectes (en les supprimer ou remplaçant par 0/ la moyenne/ autre)
+
+3.  **Choix des variables pertinentes** : visualisation, tests statistiques (Attention : pas de nom ou id)
+
+4.  **Division de la BDD en 2** : 70% train & 30% test
+
+5.  **Tests des plusieurs modèles** : régression logistique, forêt aléatoire,
+
+6.  **Évaluation de la performance des modèles** -\> Choix du modèle le plus adapté
+
+7.  **Mise en production**
+
+## Étape 1 : **Définition de la problématique**
+
+## Étape 2 : C**ollecte et préparation des données**
+
+### Collecte des données
+
+```{r}
+# importer le fichier "titanic.csv"
+df <- read.csv("/Users/huyen/Downloads/titanic.csv")
+```
+
+### Traitement des valeurs manquantes
+
+```{r}
+# vérifier s'il y a des valeurs manquantes
+summary(df)
+```
+
+**=\> Conclusion** : il y a **117 NA** dans la colonne "**Age**" =\> les traiter en remplaçant par la moyenne
+
+```{r}
+# imputer les valeurs manquantes par la moyennne
+df$Age[is.na(df$Age)] <- mean(df$Age, na.rm=T)
+
+# vérifier si les valeurs manquantes sont traitées
+summary(df)
+```
+
+### Transformation des variables en facteur
+
+Pour faire une **régression logistique**, il faut avoir une **variable** sous forme de **facteur**.
+
+```{r}
+# vérifier le type des variables
+str(df)
+```
+
+```{r}
+# transformer les variables en facteur
+df$Survived <- as.factor(df$Survived)
+df$Sex <- as.factor(df$Sex)
+df$Pclass <- as.factor(df$Pclass)
+```
+
+```{r}
+# vérifier si les variables sont transformées en facteur
+str(df)
+```
+
+## Étape 3 : **Choix des variables pertinentes**
+
+-   Survived
+
+-   Sex
+
+-   Pclass
+
+-   Age
+
+-   SibSp
+
+## Étape 4 : Division des données en 2 (70% train + 30% test)
+
+```{r}
+# sélectionner les variables nécessaires
+df <- df[, c(2,3,5,6,7,8,10)]
+
+# utiliser la fonction createDataParition pour diviser la bdd
+install.packages("caret")
+library(caret)
+
+# assurer la reproductivité du code par d'autres users
+set.seed(123)
+```
+
+```{r}
+# créer la base d'apprentissage 70%
+index <- createDataPartition(df$Survived, p= 0.7, list = F)
+index
+```
+
+```{r}
+# la base d'apprentissage occupe 70% de la BDD
+base_train <- df[index,]
+
+# la base de test occupe le reste
+base_test <- df[-index,]
+```
+
+```{r}
+# les nomns de variables
+names(base_train)
+```
+
+## Étape 4 : **Tests des plusieurs modèles**
+
+### Modèle 1: Régression logistique
+
+```{r}
+# gaussien = régression linéaire
+# binomial = régression logistique
+
+model_logistique <- glm(Survived ~ ., 
+                        family = binomial, 
+                        data = base_train)
+?glm
+```
+
+```{r}
+summary(model_logistique)
+```
+
+#### Interprétation du résultat
+
+#### - Coefficients :
+
+-   **Intercept**: 4.070865 (p \< 0.001) – la constante du modèle lorsque toutes les variables explicatives sont égales à 0.
+
+-   **Pclass2**: -1.117123 (p = 0.00225) – Les passagers de 2ème classe ont une probabilité de survie inférieure par rapport à ceux de 1ère classe.
+
+-   **Pclass3**: -2.340724 (p \< 0.001) – Les passagers de 3ième classe ont une probabilité de survie encore plus faible par rapport à ceux de 1ère classe.
+
+-   **Sexmale**: -2.948907 (p \< 0.001) – Être un homme diminue fortement les chances de survie.
+
+-   **Age**: -0.038568 (p \< 0.001) – L'âge est négativement associé à la survie, les personnes plus âgées ayant moins de chances de survivre.
+
+-   **SibSp**: -0.336275 (p = 0.01890) – Avoir des frères et sœurs ou des conjoints à bord diminue les chances de survie,.
+
+=\> Les variables **Pclass2**, **Pclass3**, **Sexmale**, **Age**, et **SibSp** sont **statistiquement significatives** dans le modèle.
+
+#### - Performance du modèle :
+
+-   **Null deviance** **(832.49)** contre **Residual deviance** **(528.96)** montre une amélioration de l'ajustement par rapport à un modèle sans variables explicatives.
+
+-   **AIC** **(544.96)** mesure la qualité du modèle, avec des valeurs plus faibles indiquant un meilleur ajustement.
+
+#### Conclusion :
+
+-   Le modèle montre que **la classe sociale, le sexe, et l'âge** sont les **principaux facteurs** influençant **la probabilité de survie**.
+
+-   Les coefficients négatifs pour ces variables indiquent que **les passagers de classe inférieure, les hommes et les personnes plus âgées** avaient **moins de chances de survivre**.
+
+#### Tester la significativité du modèle
+
+```{r}
+anova(model_logistique, test = "Chisq")
+```
+
+#### Analyse de la Déviance :
+
+-   **Df** (degrés de liberté) indique le nombre de degrés de liberté associés à chaque terme ajouté au modèle.
+-   **Deviance** représente la réduction de la déviance lorsque chaque variable est ajoutée au modèle.
+-   **Resid. Df** et **Resid. Dev** montrent les degrés de liberté résiduels et la déviance résiduelle après l'ajout de chaque variable.
+-   **Pr(\>Chi)** est la valeur p associée à chaque test du Chi2, qui teste l'hypothèse nulle selon laquelle l'ajout de la variable n'améliore pas significativement le modèle.
+
+#### Interprétation des Résultats :
+
+-   **Pclass**: L'ajout de la variable **Pclass** au modèle réduit significativement la déviance de 85.914 (p \< 2.2e-16), ce qui indique qu'elle est un facteur significatif pour prédire la survie.
+-   **Sex**: L'ajout de la variable **Sex** réduit encore plus la déviance de 192.396 (p \< 2.2e-16), ce qui en fait un facteur encore plus significatif.
+-   **Age**: L'ajout de **Age** réduit la déviance de 14.214 (p = 0.0001632), montrant qu'il a aussi un effet significatif, bien que moindre que les deux précédents.
+-   **SibSp**: Cette variable réduit la déviance de 8.645 (p = 0.0032797), indiquant qu'elle est également significative, mais avec un effet plus modéré.
+-   **Parch**: L'ajout de **Parch** réduit la déviance de 1.587 (p = 0.2077310), mais cette réduction n'est pas significative, ce qui suggère que **Parch** n'apporte pas de contribution significative au modèle.
+-   **Fare**: Enfin, **Fare** réduit la déviance de seulement 0.774 (p = 0.3789238), ce qui n'est pas significatif non plus.
+
+#### Conclusion :
+
+-   Les résultats montrent que **Pclass**, **Sex**, **Age**, et **SibSp** sont des variables significatives pour prédire la survie, avec **Sex** et **Pclass** ayant les effets les plus forts.
+
+-   En revanche, **Parch** et **Fare** n'ont pas d'effet significatif sur la probabilité de survie dans ce modèle.
+
+## **Étape 5 : Évaluation de la performance des modèles**
+
+### Prédiction basée sur le modèle de Régression Logistique
+
+```{r}
+# prédiction basée sur le modèle régression logistique
+prediction <- predict(model_logistique, type = "response")
+prediction
+?predict
+```
+
+### Prédiction sur la base de test
+
+```{r}
+library(pROC)
+
+prediction <- predict(model_logistique, 
+                      newdata = base_test[,-1], 
+                      type = "response")
+prediction
+```
+
+```{r}
+# calculer la courbe ROC pour évaluer la performance d'un modèle de classification binaire
+roc_resultat <- roc(response = base_test$Survived, 
+                    predictor = prediction, 
+                    levels= c("0","1")
+                    )
+auc_resultat <- auc(roc_resultat)
+auc_resultat
+
+
+plot(roc_resultat, main= "Courbe ROC")
+```
+
+### Prédiction de la base d'apprentissage
+
+### Évaluation de la performance avec la courbe ROC et l'AUC
+
+```{r}
+# utiliser model_logistique pour faire des prédictions sur base_train
+# type = "response" : prédictions = probabilités,  "1" (survivre)
+prediction <- predict(model_logistique, type = "response")
+prediction
+
+# calculer l'objet ROC en comparant les valeurs réelles avec les predictions
+# base_train$Survived : Les valeurs réelles (0 ou 1)
+# levels = c("0","1") : "0" pour non-survivant et "1" pour survivant
+roc_resultat <- roc(response = base_train$Survived,
+                    predictor = prediction,
+                    levels= c("0","1"))
+
+# calculer l'AUC pour cet objet ROC
+auc_resultat <- auc(roc_resultat)
+auc_resultat
+# Tracer la courbe ROC, qui montre la relation entre le taux de vrais positifs (sensibilité) et le taux de faux positifs à différents seuils de classification
+plot(roc_resultat, main= "Courbe ROC")
+```
+
+**l'AUC *(Area Under the Curve) :*** fournit une mesure quantitative de la qualité du modèle pour distinguer entre les classes (survivre ou non).
+
+-   **AUC de 1 :** parfaite
+
+-   **AUC de 0.5 :** aléatoire
+
+la **courbe ROC *(Receiver Operating Characteristic)*** : offre une visualisation de cette performance. La courbe est plus loin de la ligne, le modèle est plus performant
+
+#### Interprétation du résultat
+
+#### 1. **Setting direction: controls \< cases**
+
+-   "controls" (classe 0) \< "cases" (classe 1)
+
+    =\> le modèle prédit des **probabilités plus faibles pour les non-survivants (0)** et des **probabilités plus élevées pour les survivants (1)**.
+
+#### 2. **Area under the curve: 0.8683**
+
+=\> le modèle a une **bonne** capacité de discrimination entre les classes (survivre ou ne pas survivre).
+
+=\> si vous choisissez aléatoirement un cas (survivant) et un contrôle (non-survivant), il y a environ **86.83%** **de chances** que **le modèle classe correctement le cas avec une probabilité plus élevée que le contrôle**.
+
+#### 3. **Setting levels: control = 0, case = 1**
+
+-   "0" pour les contrôles (non-survivants)
+
+-   1" pour les cas (survivants)
+
+=\> cohérent avec les classes Setting direction
+
+### Résumé
+
+**L'AUC de 0.8683** indique que votre modèle est **performant** **pour classifier** entre les individus qui ont **survécu** (classe 1) et ceux qui n'ont **pas survécu** (classe 0).
+
+```{r}
+table(df$Survived)
+```
+
+### Modèle 2 : Forêt aléatoire (Random Forest)
+
+```{r}
+install.packages("randomForest")
+library(randomForest)
+```
+
+```{r}
+?randomForest
+model_rf <- randomForest(Survived ~ ., data= base_train, importance=TRUE,
+                        ntree= 500)
+model_rf
+```
+
+```{r}
+table(base_train$Survived)
+```
+
+#### Interprétation du résultat
+
+-   Le modèle est une **forêt aléatoire** utilisée pour une tâche de **classification**, ce qui est approprié pour prédire des classes comme **la survie (0 ou 1)**.
+-   **Number of trees: 500** : Un plus grand nombre d'arbres peut améliorer la **stabilité des prédictions**, mais **augmente le temps de calcul**.
+-   **No. of variables tried at each split: 2** : À **chaque nœud** de chaque arbre, le modèle essaie **2 variables aléatoires** pour déterminer la meilleure séparation.
+-   **OOB estimate of error rate: 16.8%** : L'estimation de **l'erreur hors sac (Out-Of-Bag)** est de 16.8%. Cela signifie que le modèle a fait une erreur de classification pour environ 16.8% des observations lorsqu'elles ont été prédictées en utilisant les arbres pour lesquels elles **n'ont pas été utilisées pour la formation**.
+
+#### **Matrice de Confusion**
+
+-   La matrice de confusion **compare les valeurs prédites par le modèle aux valeurs réelles** pour les classes 0 (n'a pas survécu) et 1 (a survécu).
+-   **Lignes** : Les lignes représentent les classes réelles.
+-   **Colonnes** : Les colonnes représentent les prédictions du modèle.
+-   **0 342 43** : **342 cas** ont été **correctement classés comme** **0** (n'ont pas survécu), et **43 cas** ont été **incorrectement classés comme 1** (ont survécu alors qu'ils n'ont pas survécu).
+-   **1 62 178** : **178 cas** ont été **correctement classés comme 1** (ont survécu), et **62 cas** ont été **incorrectement classés comme 0** (n'ont pas survécu alors qu'ils ont survécu).
+
+**Erreur par Classe**
+
+-   **class.error pour 0 : 0.1116883 (11.17%)** : Le modèle a un **taux d'erreur de 11.17% pour prédire les non-survivants**.
+-   **class.error pour 1 : 0.2583333 (25.83%)** : Le modèle a un **taux d'erreur de 25.83% pour prédire les survivants**.
+
+#### **Conclusion Globale** 
+
+-   **Performance Globale** : Le modèle de forêt aléatoire présente un **taux d'erreur global OOB de 16.8%**, ce qui suggère qu'il est globalement **performant** pour cette tâche de classification.
+-   **Erreur par Classe** : Le modèle est **plus précis pour prédire les non-survivants (classe 0) que les survivants (classe 1)**, comme en témoignent les taux d'erreur respectifs de **11.17% et 25.83%**. Cela peut indiquer un **déséquilibre** ou une difficulté du modèle à bien **capturer les caractéristiques des survivants**.
+-   **Imbalance de Classe** : La différence dans les taux d'erreur par classe peut aussi être liée à une **différence dans la proportion des classes** dans les données, ou à des **caractéristiques intrinsèques** des données rendant une classe **plus difficile à prédire.**
+
+**=\> Ce modèle semble globalement bien performant, mais il peut bénéficier de certains ajustements ou d'une analyse plus approfondie, surtout si la prédiction des survivants (classe 1) est critique.**
+
+```{r}
+# évaluer l'importance des variables
+varImp(model_rf)
+```
+
+```{r}
+# visualiser l'importance des variables dans un modèle de forêt aléatoire
+varImpPlot(model_rf)
+```
+
+#### Interprétation du résultat
+
+Deux mesures principales d'importance des variables sont souvent affichées : **MeanDecreaseAccuracy** et **MeanDecreaseGini**.
+
+#### 1. **MeanDecreaseAccuracy (Diminution Moyenne de l'Exactitude) :**
+
+-   **Qu'est-ce que c'est ?**
+    -   Cette mesure évalue l'importance d'une variable en regardant combien l'exactitude (accuracy) du modèle diminue lorsqu'on permute aléatoirement les valeurs de cette variable dans les données hors sac (Out-Of-Bag, OOB).
+    -   Si **l'exactitude diminue** beaucoup après la permutation, cela signifie que **la variable est importante** pour les prédictions du modèle.
+    -   Cette mesure prend en compte **l'effet de chaque variable** sur la prédiction globale du modèle.
+-   **Interprétation dans le graphique :**
+    -   Les variables avec une **grande valeur** de **MeanDecreaseAccuracy** sont celles qui **contribuent le plus à la précision** du modèle.
+
+#### 2. **MeanDecreaseGini (Diminution Moyenne du Gini) :**
+
+-   **Qu'est-ce que c'est ?**
+    -   Cette mesure évalue l'importance d'une variable en se **basant sur le critère de l'indice de Gini** utilisé pour **construire les arbres de décision** dans la forêt aléatoire.
+    -   L'indice de Gini **mesure la pureté des nœuds** dans un arbre de décision : une **diminution du Gini** indique une **meilleure séparation** des classes.
+    -   **MeanDecreaseGini** quantifie **la contribution de chaque variable à la diminution de l'impureté** (Gini) dans tous les arbres du modèle.
+-   **Interprétation dans le graphique :**
+    -   Les variables avec une **grande valeur** de **MeanDecreaseGini** sont celles qui contribuent le plus à **la réduction de l'impureté** des nœuds dans les arbres de la forêt.
+    -   Ce graphique est utile pour **identifier** **les variables qui sont fréquemment utilisées pour séparer les données** dans les arbres du modèle.
+
+#### **Résumé des Différences :**
+
+-   **Approche d'évaluation :**
+
+    -   **MeanDecreaseAccuracy** se concentre sur **l'impact des variables sur l'exactitude** globale des prédictions du modèle.
+    -   **MeanDecreaseGini** mesure la capacité des variables à **améliorer la pureté des séparations** des classes dans les arbres de décision.
+
+-   **Utilisation :**
+
+    -   **MeanDecreaseAccuracy** est souvent préféré pour **évaluer l'importance des variables**.
+    -   **MeanDecreaseGini** est plus orienté vers **la compréhension de la structure des arbres** et de **l'utilisation des variables** dans les décisions internes des arbres.
+
+-   2 catégories =\> régression logistique binominale
+
+-   \>2 catégories =\> régression logistique multinominale ou polytomique
+
+```{r}
+plot(model_rf)
+```
+
+```{r}
+prediction_train <- predict(model_rf, type = "prob")
+prediction_test <- predict(model_rf, newdata = base_test[,-1] ,type = "prob")
+```
+
+```{r}
+prediction_train
+```
+
+```{r}
+prediction_test
+```
+
+```{r}
+prediction_train <- predict(model_rf, newdata = base_train, type = "response")
+
+prediction_train <- as.numeric(prediction_train)
+
+roc_obj_train <- roc(base_train$Survived, 
+                     prediction_train, 
+                     levels= c("0","1"))
+print(auc(roc_obj_train))
+
+plot(roc_obj_train, main= "Courbe ROC")
+```
+
+```{r}
+length(base_train$Survived)
+length(prediction_train)
+```
+
+```{r}
+# transformer prediction_test en numérique
+prediction_test <- as.numeric(prediction_test)
+
+# vérifier si la transformation est faite
+str(prediction_test)
+```
+
+```{r}
+prediction_test <- predict(model_rf, newdata = base_test, type = "response")
+
+prediction_test <- as.numeric(prediction_test)
+
+roc_obj_test <- roc(base_test$Survived, 
+                     prediction_test, 
+                     levels= c("0","1"))
+print(auc(roc_obj_test))
+
+plot(roc_obj_test, main= "Courbe ROC")
+```
+
+#### Résultats Résumés :
+
+1.  **Modèle de Régression Logistique :**
+    -   AUC sur la base d'apprentissage : **0.8683**
+    -   AUC sur la base de test : **0.8254**
+2.  **Modèle de Forêt Aléatoire :**
+    -   AUC sur la base d'apprentissage : **0.905**
+    -   AUC sur la base de test : **0.7945**
+
+### Interprétation :
+
+1.  **Régression Logistique :**
+    -   **L'AUC sur la base d'apprentissage (0.8683)** est **proche** de celle **sur la base de test (0.8254)**. Cela indique que le modèle de régression logistique a une **bonne capacité de généralisation**.
+
+        =\> Il est **performant sur les nouvelles données**, ce qui suggère un **modèle bien équilibré avec peu ou pas de surapprentissage** (overfitting).
+2.  **Forêt Aléatoire :**
+    -   **L'AUC sur la base d'apprentissage est plus élevée (0.905)**, ce qui montre que le modèle de forêt aléatoire est **très performant** sur les données sur lesquelles il a été entraîné.
+    -   Cependant, il y a une baisse significative de **l'AUC sur la base de test (0.7945)**. Cette baisse indique que le modèle de forêt aléatoire **pourrait être surappris** (overfit) : ce qui **nuit à sa capacité de généralisation** sur de nouvelles données.
+
+### Conclusion :
+
+-   **Régression Logistique** : Ce modèle présente une **performance stable et équilibrée** entre les ensembles d'apprentissage et de test, ce qui en fait un **choix fiable**, surtout si la robustesse sur des données nouvelles est prioritaire.
+
+-   **Forêt Aléatoire** : Bien que ce modèle soit plus performant sur les données d'apprentissage, sa baisse de performance sur les données de test suggère qu'il **pourrait être surappris**. Cela le rend potentiellement **moins fiable** pour des prédictions sur des données non vues auparavant.
+
+### Recommandation :
+
+-   Si vous recherchez un modèle avec une bonne capacité de généralisation et un risque minimal de surapprentissage, la **régression logistique** semble être le meilleur choix.
+
+-   Si vous souhaitez explorer davantage la forêt aléatoire, vous pourriez envisager de régler les hyperparamètres ou d'utiliser des techniques de régularisation pour réduire le surapprentissage.
+
+## 
