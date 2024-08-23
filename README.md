@@ -17,13 +17,13 @@ C'est un challenge intense de 7 jours d'affilée avec plein de découvertes enri
 - **Package `dplyr`** : Techniques de manipulation de données avancées, telles que le filtrage, la sélection, et les jointures.
 
 #### **Jour 3 :**
-- **Visualisation de données avec ggplot2** : Création de visualisations de données avec boxplots, histogrammes, courbes, et diagrammes circulaires.
+- **Visualisation de données avec ggplot2** : boxplots, histogrammes, courbes, et diagrammes circulaires
 
 #### **Jour 4 :**
 - **Structures conditionnelles** : Mise en œuvre de conditions `if-else` et de boucles `for`.
 
 #### **Jour 5 :**
-- **Modélisation statistique** : Application de la Régression Linéaire pour explorer les relations entre les variables et faire des prédictions basées sur des données existantes.
+- **Modélisation statistique** : Application de la Régression Linéaire pour explorer les relations entre les variables et faire des prédictions .
 
 #### **Jour 6 :**
 - **Régression logistique (`glm`)** : Modélisation binaire pour prédire des résultats tels que succès/échec.
