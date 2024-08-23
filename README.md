@@ -50,8 +50,8 @@ C'est un challenge intense de 7 jours d'affilée avec plein de découvertes enri
        + Étape 7: Mise en production
  
 3. **Exercice 3: Apprentissage de Shiny pour les applications web** :
-   - Création de dashboards interactifs
-   - Développement de menus dynamiques pour charger et afficher des données
+   - **Dashboard**: Création de dashboards interactifs
+   - **ChargerCSV**: Développement de menus dynamiques pour charger et afficher des données
 
 ### Conclusion
 
