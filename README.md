@@ -8,29 +8,28 @@ R est un outil incontournable pour la data science, offrant des fonctionnalités
 
 C'est un challenge intense de 7 jours d'affilée avec plein de découvertes enrichissantes.
 
-#### **Jour 1 :** 
-- **Installation de RStudio** : Découverte de l'interface et des fonctionnalités.
-- **Manipulation et stockage des données** : Apprentissage des structures de données fondamentales en R, telles que les vecteurs, facteurs, listes, matrices, et dataframes. 
+#### **Jour 1 : Installation de RStudio & Manipulation des données** 
+- Apprentissage des structures de données fondamentales en R, telles que les vecteurs, facteurs, listes, matrices, et dataframes. 
 
-#### **Jour 2 :** 
-- **Statistiques descriptives** : Calcul des mesures centrales et de dispersion comme la médiane, la moyenne, et l'écart-type.
-- **Package `dplyr`** : Techniques de manipulation de données avancées, telles que le filtrage, la sélection, et les jointures.
+#### **Jour 2 : Statistiques descriptives & Package `dplyr`** 
+- Calcul des mesures centrales et de dispersion comme la médiane, la moyenne, et l'écart-type.
+- Techniques de manipulation de données avancées, telles que le filtrage, la sélection, et les jointures.
 
-#### **Jour 3 :**
-- **Visualisation de données avec ggplot2** : boxplots, histogrammes, courbes, et diagrammes circulaires
+#### **Jour 3 : Visualisation de données avec ggplot2**
+- boxplots, histogrammes, courbes, et diagrammes circulaires
 
-#### **Jour 4 :**
-- **Structures conditionnelles** : Mise en œuvre de conditions `if-else` et de boucles `for`.
+#### **Jour 4 : Structures conditionnelles**
+- Mise en œuvre de conditions `if-else` et de boucles `for`
 
-#### **Jour 5 :**
-- **Modélisation statistique** : Application de la Régression Linéaire pour explorer les relations entre les variables et faire des prédictions .
+#### **Jour 5 : Modélisation statistique**
+- Application de la Régression Linéaire pour explorer les relations entre les variables et faire des prédictions
 
-#### **Jour 6 :**
+#### **Jour 6 : Modèles de Machine Learning**
 - **Régression logistique (`glm`)** : Modélisation binaire pour prédire des résultats tels que succès/échec.
 - **Random Forest (`randomForest`)** : Introduction à l'apprentissage supervisé, ajustement des paramètres pour optimiser les performances du modèle.
 
-#### **Jour 7 :**
-- **Création de dashboards interactifs avec Shiny** : Développement d'applications web interactives pour visualiser et manipuler les données en temps réel. 
+#### **Jour 7 : Création de dashboards interactifs avec Shiny**
+- Développement d'applications web interactives pour visualiser et manipuler les données en temps réel
 
 ### Ce que j'ai appris au fil de ce challenge via 3 exercices ci-dessous :
 
@@ -50,7 +49,7 @@ C'est un challenge intense de 7 jours d'affilée avec plein de découvertes enri
        + Étape 7: Mise en production
  
 3. **Exercice 3: Apprentissage de Shiny pour les applications web** :
-   - **Dashboard**: Création de dashboards interactifs
+   - **Dashboard**: Création d'un dashboard interactif
    - **ChargerCSV**: Développement de menus dynamiques pour charger et afficher des données
 
 ### Conclusion
